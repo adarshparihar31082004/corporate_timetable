@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Corporate Weekly Planner</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #eef2f7;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1700px;
+            margin: auto;
+            background: #fff;
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .top-header {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+
+        .top-header h1 {
+            margin: 0;
+            font-size: 30px;
+            color: #12304a;
+        }
+
+        .top-header p {
+            margin: 8px 0 0 0;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .field-group input,
+        .field-group textarea,
+        .field-group select {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .field-group textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .saved-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            padding: 14px;
+            background: #f8fafc;
+            border: 1px solid #dbe4ee;
+            border-radius: 12px;
+        }
+
+        .saved-bar select {
+            min-width: 320px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .logo-preview {
+            margin-top: 6px;
+            max-height: 52px;
+            max-width: 180px;
+            display: none;
+            border: 1px solid #dbe4ee;
+            padding: 4px;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .table-card {
+            border: 1px solid #d9e2ec;
+            border-radius: 14px;
+            overflow-x: auto;
+            background: #fff;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1450px;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #d5dee8;
+            padding: 8px;
+            vertical-align: top;
+            text-align: center;
+        }
+
+        th {
+            background: #1d3557;
+            color: white;
+            font-size: 14px;
+            padding: 12px 8px;
+        }
+
+        td.time-cell {
+            width: 150px;
+            background: #eef4fb;
+        }
+
+        td.action-cell {
+            width: 120px;
+            background: #f8fafc;
+            vertical-align: middle;
+        }
+
+        textarea.time-input {
+            width: 100%;
+            min-height: 72px;
+            resize: vertical;
+            border: 1px solid #b8c4d3;
+            border-radius: 8px;
+            padding: 9px;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            background: #f9fbfd;
+        }
+
+        textarea.day-input {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            line-height: 1.45;
+            background: #ffffff;
+        }
+
+        select.row-type {
+            width: 100%;
+            margin-top: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 13px;
+            background: #fff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-secondary { background: #475569; color: white; }
+        .btn-success { background: #15803d; color: white; }
+        .btn-warning { background: #b45309; color: white; }
+        .btn-danger { background: #dc2626; color: white; padding: 8px 12px; font-size: 13px; }
+
+        .hint {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 1100px) {
+            .meta-grid { grid-template-columns: 1fr; }
+            .full { grid-column: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-header">
+            <h1>Corporate Weekly Planner</h1>
+            <p>Generate branded, saveable weekly planner PDFs with logo, notes, and confidentiality controls.</p>
+        </div>
+
+        <div class="saved-bar">
+            <select id="savedPlannerSelect">
+                <option value="">Load saved planner...</option>
+                {% for planner in planners %}
+                    <option value="{{ planner.id }}">{{ planner.title }} — {{ planner.week_range or "No week" }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn-secondary" onclick="loadPlanner()">Load Selected</button>
+        </div>
+
+        <div class="meta-grid">
+            <div class="field-group">
+                <label for="title">Document Title</label>
+                <input id="title" type="text" placeholder="Weekly Operations Planner" />
+            </div>
+
+            <div class="field-group">
+                <label for="organization">Organization</label>
+                <input id="organization" type="text" placeholder="ABC Technologies Pvt. Ltd." />
+            </div>
+
+            <div class="field-group">
+                <label for="department">Department</label>
+                <input id="department" type="text" placeholder="Engineering" />
+            </div>
+
+            <div class="field-group">
+                <label for="team">Team</label>
+                <input id="team" type="text" placeholder="Platform Team" />
+            </div>
+
+            <div class="field-group">
+                <label for="week_range">Week Range</label>
+                <input id="week_range" type="text" placeholder="01 Apr 2026 - 07 Apr 2026" />
+            </div>
+
+            <div class="field-group">
+                <label for="prepared_by">Prepared By</label>
+                <input id="prepared_by" type="text" placeholder="Adarsh Parihar" />
+            </div>
+
+            <div class="field-group">
+                <label for="logoFile">Company Logo</label>
+                <input id="logoFile" type="file" accept=".png,.jpg,.jpeg" />
+                <button class="btn-warning" type="button" onclick="uploadLogo()">Upload Logo</button>
+                <img id="logoPreview" class="logo-preview" alt="Logo preview" />
+            </div>
+
+            <div class="field-group full">
+                <label for="notes">Notes / Remarks</label>
+                <textarea id="notes" placeholder="Add weekly priorities, dependencies, approvals, risks, leave notes, or client remarks."></textarea>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time Block</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                        <th>Saturday</th>
+                        <th>Sunday</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="addRow()">Add Work Row</button>
+            <button class="btn-secondary" onclick="addBreakRow()">Add Break Row</button>
+            <button class="btn-warning" onclick="savePlanner()">Save Planner</button>
+            <button class="btn-success" onclick="generatePDF()">Generate PDF</button>
+        </div>
+
+        <div class="hint">
+            Use multi-line content for task details, owners, milestones, escalation notes, room links, or client checkpoints.
+        </div>
+    </div>
+
+    <script>
+        let uploadedLogoPath = "";
+
+        function escapeHtml(value) {
+            return (value || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+        }
+
+        function addRow(data = {}) {
+            const tbody = document.getElementById("tableBody");
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td class="time-cell">
+                    <textarea class="time-input" placeholder="09:00 AM - 10:00 AM">${escapeHtml(data.time || "")}</textarea>
+                    <select class="row-type">
+                        <option value="normal" ${data.row_type === "break" ? "" : "selected"}>Normal</option>
+                        <option value="break" ${data.row_type === "break" ? "selected" : ""}>Break</option>
+                    </select>
+                </td>
+                <td><textarea class="day-input monday" placeholder="Tasks / meetings / owners">${escapeHtml(data.monday || "")}</textarea></td>
+                <td><textarea class="day-input tuesday" placeholder="Tasks / meetings / owners">${escapeHtml(data.tuesday || "")}</textarea></td>
+                <td><textarea class="day-input wednesday" placeholder="Tasks / meetings / owners">${escapeHtml(data.wednesday || "")}</textarea></td>
+                <td><textarea class="day-input thursday" placeholder="Tasks / meetings / owners">${escapeHtml(data.thursday || "")}</textarea></td>
+                <td><textarea class="day-input friday" placeholder="Tasks / meetings / owners">${escapeHtml(data.friday || "")}</textarea></td>
+                <td><textarea class="day-input saturday" placeholder="Tasks / meetings / owners">${escapeHtml(data.saturday || "")}</textarea></td>
+                <td><textarea class="day-input sunday" placeholder="Tasks / meetings / owners">${escapeHtml(data.sunday || "")}</textarea></td>
+                <td class="action-cell">
+                    <button class="btn-danger" onclick="deleteRow(this)">Delete</button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        }
+
+        function addBreakRow() {
+            addRow({
+                time: "01:00 PM - 02:00 PM",
+                monday: "Lunch Break",
+                tuesday: "Lunch Break",
+                wednesday: "Lunch Break",
+                thursday: "Lunch Break",
+                friday: "Lunch Break",
+                saturday: "Lunch Break",
+                sunday: "Lunch Break",
+                row_type: "break"
+            });
+        }
+
+        function deleteRow(button) {
+            button.closest("tr").remove();
+        }
+
+        function clearRows() {
+            document.getElementById("tableBody").innerHTML = "";
+        }
+
+        function collectRows() {
+            const trs = document.querySelectorAll("#tableBody tr");
+            const rows = [];
+
+            trs.forEach((tr) => {
+                rows.push({
+                    time: tr.querySelector(".time-input").value.trim(),
+                    monday: tr.querySelector(".monday").value.trim(),
+                    tuesday: tr.querySelector(".tuesday").value.trim(),
+                    wednesday: tr.querySelector(".wednesday").value.trim(),
+                    thursday: tr.querySelector(".thursday").value.trim(),
+                    friday: tr.querySelector(".friday").value.trim(),
+                    saturday: tr.querySelector(".saturday").value.trim(),
+                    sunday: tr.querySelector(".sunday").value.trim(),
+                    row_type: tr.querySelector(".row-type").value
+                });
+            });
+
+            return rows;
+        }
+
+        function collectPayload() {
+            return {
+                title: document.getElementById("title").value.trim() || "Weekly Corporate Planner",
+                organization: document.getElementById("organization").value.trim(),
+                department: document.getElementById("department").value.trim(),
+                team: document.getElementById("team").value.trim(),
+                week_range: document.getElementById("week_range").value.trim(),
+                prepared_by: document.getElementById("prepared_by").value.trim(),
+                notes: document.getElementById("notes").value.trim(),
+                logo_path: uploadedLogoPath,
+                rows: collectRows()
+            };
+        }
+
+        async function uploadLogo() {
+            const fileInput = document.getElementById("logoFile");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please choose a logo file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("/upload-logo", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || "Logo upload failed.");
+                return;
+            }
+
+            uploadedLogoPath = data.logo_path;
+
+            const preview = document.getElementById("logoPreview");
+            preview.src = "/" + uploadedLogoPath;
+            preview.style.display = "block";
+
+            alert("Logo uploaded successfully.");
+        }
+
+        async function savePlanner() {
+            const payload = collectPayload();
+
+            const response = await fetch("/save-planner", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || "Failed to save planner.");
+                return;
+            }
+
+            alert("Planner saved successfully. Refresh page to see it in saved list.");
+        }
+
+        async function loadPlanner() {
+            const select = document.getElementById("savedPlannerSelect");
+            const plannerId = select.value;
+
+            if (!plannerId) {
+                alert("Please select a saved planner.");
+                return;
+            }
+
+            const response = await fetch(`/load-planner/${plannerId}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.detail || "Failed to load planner.");
+                return;
+            }
+
+            document.getElementById("title").value = data.title || "";
+            document.getElementById("organization").value = data.organization || "";
+            document.getElementById("department").value = data.department || "";
+            document.getElementById("team").value = data.team || "";
+            document.getElementById("week_range").value = data.week_range || "";
+            document.getElementById("prepared_by").value = data.prepared_by || "";
+            document.getElementById("notes").value = data.notes || "";
+
+            uploadedLogoPath = data.logo_path || "";
+            const preview = document.getElementById("logoPreview");
+
+            if (uploadedLogoPath) {
+                preview.src = "/" + uploadedLogoPath;
+                preview.style.display = "block";
+            } else {
+                preview.style.display = "none";
+            }
+
+            clearRows();
+            (data.rows || []).forEach(row => addRow(row));
+        }
+
+        async function generatePDF() {
+            const payload = collectPayload();
+
+            const response = await fetch("/generate-pdf", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                alert("Failed to generate PDF.");
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = (payload.title || "weekly_corporate_planner")
+                .toLowerCase()
+                .replaceAll(" ", "_")
+                .replaceAll("/", "_") + ".pdf";
+
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Starter rows
+        addRow({ time: "09:00 AM - 10:00 AM" });
+        addRow({ time: "10:00 AM - 11:00 AM" });
+        addRow({ time: "11:15 AM - 12:15 PM" });
+        addBreakRow();
+        addRow({ time: "02:00 PM - 03:00 PM" });
+        addRow({ time: "03:00 PM - 04:00 PM" });
+        addRow({ time: "04:15 PM - 05:15 PM" });
+    </script>
+</body>
+</html>
